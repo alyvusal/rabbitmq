@@ -1,0 +1,25 @@
+# https://www.infracloud.io/blogs/setup-rabbitmq-ha-mode-kubernetes-operator/#why-ha-mode
+# The RabbitMQ setup is up and running with three replicas.
+# The replication is not happening in the case of RabbitMQ classic queues.
+# If a node terminates, the queues will be lost. Hence, we need to implement the HA mode.
+#
+# For implementing HA mode, we will create a policy, we can run a command manually inside the pod or create a policy configuration file.
+
+# This is classic queue mirroring and deprecated feature
+
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: ha-policy
+  # namespace: rabbitmq-dev
+spec:
+  name: transient # name of the policy
+  vhost: "/" # default to '/' if not provided
+  pattern: "" # regex used to match queues and exchanges
+  applyTo: "all" # set to 'queues', 'exchanges', or 'all'
+  definition:
+    ha-mode: all
+    ha-sync-mode: automatic
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

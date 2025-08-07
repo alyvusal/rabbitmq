@@ -1,0 +1,17 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#exchanges-bindings
+# The following manifest will create a binding between an exchange and a queue
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: binding
+  # namespace: rabbitmq-dev
+spec:
+  # arguments: {}
+  # vhost: /
+  source: fanout-example # an existing exchange
+  destination: test-queue # an existing queue
+  destinationType: queue # can be 'queue' or 'exchange'  # where binding will be created
+  # routingKey: src-queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

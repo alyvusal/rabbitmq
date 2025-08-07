@@ -1,0 +1,129 @@
+###########################################
+# DOWNSTREAM (FEDERATED)
+###########################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: federation-uri-secret-downstream
+  # namespace: rabbitmq-slave
+type: Opaque
+stringData:
+  uri: "amqp://admin:admin@rabbitmq-cluster.rabbitmq.svc"
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Federation
+metadata:
+  name: federation-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: "upstream"
+  uriSecret:
+    name: federation-uri-secret-downstream
+  ackMode: "on-confirm"
+  maxHops: 1
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: federate-upstream-policy-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: federate-upstream-policy
+  pattern: fed.exchange  # "^fed.exchange$"
+  applyTo: "exchanges"
+  priority: 0
+  definition:
+    federation-upstream: upstream
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: fed-queue-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: fed.queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  name: fed-exchange-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: fed.exchange
+  vhost: /
+  type: direct
+  autoDelete: false
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bind-fed-queue-to-fed-exchange-downstream
+  # namespace: rabbitmq-slave
+spec:
+  source: fed.exchange
+  destination: fed.queue
+  destinationType: queue
+  routingKey: fed.queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+###########################################
+# UPSTREAM (SOURCE)
+###########################################
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: fed-queue-upstream
+  # namespace: rabbitmq
+spec:
+  name: fed.queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+# send message from this exchange with routing key fed.queue to test
+# then check fed.queue on federated cluster
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  name: fed-exchange-upstream
+  # namespace: rabbitmq
+spec:
+  name: fed.exchange
+  vhost: /
+  type: direct
+  autoDelete: false
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bind-fed-queue-to-fed-exchange-upstream
+  # namespace: rabbitmq
+spec:
+  source: fed.exchange
+  destination: fed.queue
+  destinationType: queue
+  routingKey: fed.queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

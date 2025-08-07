@@ -1,0 +1,111 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#shovel
+# https://www.rabbitmq.com/docs/shovel-dynamic#declaring
+# https://github.com/rabbitmq/messaging-topology-operator/tree/main/docs/examples/shovels
+
+# Example in this file create in-cluster shovel for self rabbitmq: src-queue > amq.direct exchange -> dst-queue
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Shovel
+metadata:
+  name: in-cluster-self
+  # namespace: rabbitmq-dev
+spec:
+  name: in-cluster-self
+  # vhost: /
+  ackMode: on-confirm  # on-confirm, on-publish, no-ack
+  uriSecret:
+    name: in-cluster-src-queue-to-dst-queue-shovel
+  addForwardHeaders: true  # to see x-forwar nifo when message get
+  reconnectDelay: 1
+  # SOURCE CONFIG
+  srcDeleteAfter: never
+  srcQueue: src-queue
+  srcProtocol: amqp091 # amqp091, amqp10
+  srcPrefetchCount: 1000
+  # DESTINATION CONFIG
+  destExchange: amq.direct
+  destExchangeKey: dst-queue
+  destProtocol: amqp091 # amqp091, amqp10
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: in-cluster-src-queue-to-dst-queue-shovel
+type: Opaque
+stringData:
+  # value of each key can be either a single URI or a comma-separated list of URIs
+  srcUri: "amqp://"  # connect to local server as default user
+  destUri: "amqp://"  # connect to local server as default user
+
+# amqp://
+# connect to local server as default user
+
+# amqp://user@/my-vhost
+# connect to local server with alternate user and virtual host (passwords are not required for local connections)
+
+# amqp://server-name
+# connect to server-name, without SSL and default credentials
+
+# amqp://user:password@server-name/my-vhost
+# connect to server-name, with credentials and overridden virtual host
+
+# amqps://user:password@server-name?cacertfile=/path/to/cacert.pem&certfile=/path/to/cert.pem&keyfile=/path/to/key.pem&verify=verify_peer
+# connect to server-name, with credentials and SSL
+
+# amqps://server-name?cacertfile=/path/to/cacert.pem&certfile=/path/to/cert.pem&keyfile=/path/to/key.pem&verify=verify_peer&auth_mechanism=external
+# connect to server-name, with SSL and EXTERNAL authentication
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: src-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: src-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: dst-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: dst-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bind-src-queue-to-amq.direct-exchange
+  # namespace: rabbitmq-dev
+spec:
+  source: amq.direct
+  destination: src-queue
+  destinationType: queue
+  routingKey: src-queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bind-dst-queue-to-amq.direct-exchange
+  # namespace: rabbitmq-dev
+spec:
+  source: amq.direct
+  destination: dst-queue
+  destinationType: queue
+  routingKey: dst-queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

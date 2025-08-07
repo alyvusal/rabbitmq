@@ -1,0 +1,34 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#user-permissions-obj
+apiVersion: rabbitmq.com/v1beta1
+kind: TopicPermission
+metadata:
+  name: my-admin-user-topic-permission
+  # namespace: rabbitmq-dev
+spec:
+  vhost: "/prod"
+  user: "my-admin-user" # name of the RabbitMQ user
+  permissions:
+    write: ".*"
+    exchange: ".*"
+    read: ".*"
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: TopicPermission
+metadata:
+  name: my-hash-user-topic-permission
+  # namespace: rabbitmq-dev
+spec:
+  vhost: "/test"
+  user: "my-hash-user" # name of the RabbitMQ user
+  # userReference:
+  permissions:
+    write: ".*"
+    exchange: "fanout-example"
+    read: ".*"
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---

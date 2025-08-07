@@ -1,0 +1,92 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#queues-policies
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: mirror-all-automatic
+  # namespace: rabbitmq-dev
+spec:
+  name: all
+  pattern: "^all-" # matches any queue begins with "all-"
+  applyTo: "queues"
+  priority: 0
+  definition:
+    ha-mode: all
+    ha-sync-mode: automatic
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: exactly-all-manual
+  # namespace: rabbitmq-dev
+spec:
+  name: exactly
+  pattern: "^exactly-" # matches any queue begins with "all-"
+  applyTo: "queues"
+  priority: 0
+  definition:
+    ha-mode: exactly
+    ha-sync-mode: manual
+    ha-params: 2
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: nodes-all-manual
+  # namespace: rabbitmq-dev
+spec:
+  name: nodes
+  pattern: "^nodes-" # matches any queue begins with "all-"
+  applyTo: "queues"
+  priority: 0
+  definition:
+    ha-mode: nodes
+    ha-sync-mode: manual
+    ha-params:
+    - rabbit@rabbitmq-cluster-server-0.rabbitmq-cluster-nodes.rabbitmq
+    - rabbit@rabbitmq-cluster-server-1.rabbitmq-cluster-nodes.rabbitmq
+    - rabbit@rabbitmq-cluster-server-2.rabbitmq-cluster-nodes.rabbitmq
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: all-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: all-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: exactly-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: exactly-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: nodes-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: nodes-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

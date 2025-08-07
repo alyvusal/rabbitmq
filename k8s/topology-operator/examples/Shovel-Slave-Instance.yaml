@@ -1,0 +1,76 @@
+---
+# Example in this file create in-cluster shovel for slave rabbitmq: src-queue > amq.direct exchange (rabbitmq-slave) -> dst-queue (rabbitmq-slave)
+apiVersion: rabbitmq.com/v1beta1
+kind: Shovel
+metadata:
+  name: in-cluster-external-rabbitmq
+  # namespace: rabbitmq-dev
+spec:
+  name: in-cluster-external-rabbitmq
+  # vhost: /
+  ackMode: on-confirm  # on-confirm, on-publish, no-ack
+  uriSecret:
+    name: in-cluster-external-rabbitmq-shovel-secret
+  addForwardHeaders: true  # to see x-forwarder info when message get
+  reconnectDelay: 1
+  # SOURCE CONFIG
+  srcDeleteAfter: never
+  srcQueue: src-queue
+  srcProtocol: amqp091 # amqp091, amqp10
+  srcPrefetchCount: 1000
+  # DESTINATION CONFIG
+  destExchange: amq.direct
+  destExchangeKey: dst-queue
+  destProtocol: amqp091 # amqp091, amqp10
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: in-cluster-external-rabbitmq-shovel-secret
+type: Opaque
+stringData:
+  # value of each key can be either a single URI or a comma-separated list of URIs
+  srcUri: "amqp://"  # connect to local server as default user
+  destUri: "amqp://admin:admin@rabbitmq-cluster.rabbitmq-slave.svc"
+          #  "amqp://admin:admin@rabbitmq-cluster-server-0.rabbitmq-cluster-nodes.rabbitmq-slave"  # rabbitmq-cluster-nodes is headless service
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: src-queue
+  # namespace: rabbitmq-dev
+spec:
+  name: src-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: dst-queue-slave
+  # namespace: rabbitmq-dev
+spec:
+  name: dst-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bind-dst-queue-to-amq.direct-exchange
+  # namespace: rabbitmq-dev
+spec:
+  source: amq.direct
+  destination: dst-queue
+  destinationType: queue
+  routingKey: dst-queue
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave

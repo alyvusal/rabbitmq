@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rabbitmq
+
+resources:
+- ../cluster
+- base/ingress.yaml
+
+patches:
+  - path: patches/annotations.yaml
+  # - path: patches/secret.yaml  # alternative to secretGenerator
+
+generatorOptions:
+ disableNameSuffixHash: true
+
+secretGenerator:
+- name: rabbitmq-cluster-default-user
+  literals:
+  - |-
+    default_user.conf=default_user = admin
+    default_pass = admin
+  - username=admin
+  - password=admin
+  - connection_string='amqp://admin:admin@rabbitmq-cluster.rabbitmq.svc:5672'
+  - host=rabbitmq-cluster.rabbitmq.svc
+  - port="5672"
+  - stream-port="5552"
+  - provider=rabbitmq
+  - type=rabbitmq

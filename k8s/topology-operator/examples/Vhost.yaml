@@ -1,0 +1,56 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#vhosts
+# default exchanges will be create for each vhost by rabbitmq
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  name: test-vhost # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: /test # name of the vhost
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  name: dev-vhost # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: /dev # name of the vhost
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  name: prod-vhost # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: /prod # name of the vhost
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  name: prod-app1-vhost # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: /prod/app1 # name of the vhost
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  name: prod-app2-vhost # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: /prod/app2 # name of the vhost
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

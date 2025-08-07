@@ -1,0 +1,71 @@
+###########################################
+# DOWNSTREAM (FEDERATED)
+###########################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: federation-uri-secret-downstream
+  # namespace: rabbitmq-slave
+type: Opaque
+stringData:
+  uri: "amqp://admin:admin@rabbitmq-cluster.rabbitmq.svc"
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Federation
+metadata:
+  name: federation-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: "upstream"
+  uriSecret:
+    name: federation-uri-secret-downstream
+  ackMode: "on-confirm"
+  maxHops: 1
+  queue: fed.queue  # this is for Queue Federation
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: federate-upstream-policy-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: federate-upstream-policy
+  pattern: fed.queue
+  applyTo: "queues"
+  priority: 0
+  definition:
+    federation-upstream: upstream
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: fed-queue-downstream
+  # namespace: rabbitmq-slave
+spec:
+  name: fed.queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq-slave
+---
+###########################################
+# UPSTREAM (SOURCE)
+###########################################
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: fed-queue-upstream
+  # namespace: rabbitmq
+spec:
+  name: fed.queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---

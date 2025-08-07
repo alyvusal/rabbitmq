@@ -1,0 +1,134 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq-cluster
+  # annotations:
+  #   rabbitmq.com/topology-allowed-namespaces: "rabbitmq"
+spec:
+  # https://github.com/rabbitmq/cluster-operator/tree/main/docs/examples/external-admin-secret-credentials
+  secretBackend:
+    externalSecret:
+      name: rabbitmq-cluster-default-user-external
+  # https://www.rabbitmq.com/kubernetes/operator/using-operator#override
+  # override:
+  #   service:
+  #     spec:
+  #       ports:
+  #         - name: additional-port # adds an additional port on the service
+  #           protocol: TCP
+  #           port: 12345
+  #   statefulSet:
+  #     spec:
+  #       template:
+  #         spec:
+  #           containers:
+  #             - name: rabbitmq
+  #               ports:
+  #                 - containerPort: 12345 # opens an additional port on the rabbitmq server container
+  #                   name: additional-port
+  #                   protocol: TCP
+  # https://www.rabbitmq.com/kubernetes/operator/using-operator#tls-conf
+  # tls:
+  #   secretName: rabbitmq-server-certs
+  #   caSecretName: rabbitmq-ca-cert
+  #   disableNonTLSListeners: true
+  rabbitmq:
+    # /etc/rabbitmq/rabbitmq-env.conf.
+    # envConfig: |
+    #   RABBITMQ_DISTRIBUTION_BUFFER_SIZE=some_value
+    # https://www.rabbitmq.com/docs/configure
+    # https://www.rabbitmq.com/kubernetes/operator/using-operator#additional-config
+    # /etc/rabbitmq/conf.d/
+    # 10-defaults.conf
+    # 10-operatorDefaults.conf: RabbitMQ Cluster Kubernetes Operator dfaults
+    # 11-default_user.conf: Default user name and password
+    # 90-userDefinedConfiguration.conf: Additional RabbitMQ configuration
+    additionalConfig: |
+      loopback_users.guest = false
+      # if you enable default user changes, topology operator will not work
+      default_permissions.configure = .*
+      default_permissions.read = .*
+      default_permissions.write = .*
+      default_user = admin
+      default_pass = admin
+      default_user_tags.administrator = true
+    #   collect_statistics_interval = 10000
+    #   log.console.level = info
+    #   log.file.level = info
+    # /etc/rabbitmq/advanced.config
+    # advancedConfig: |
+    #   [
+    #       {ra, [
+    #           {wal_data_dir, '/var/lib/rabbitmq/quorum-wal'}
+    #       ]}
+    #   ].
+    # The contents of this field are copied into a ConfigMap and mounted in the RabbitMQ container in the path /etc/rabbitmq/erl_inetrc.
+    # https://www.rabbitmq.com/kubernetes/operator/using-operator#additional-plugins
+    additionalPlugins:
+      # - rabbitmq_amqp1_0
+      # - rabbitmq_auth_backend_cache
+      # - rabbitmq_auth_backend_http
+      # - rabbitmq_auth_backend_ldap
+      # - rabbitmq_auth_backend_oauth2
+      # - rabbitmq_auth_mechanism_ssl
+      # - rabbitmq_consistent_hash_exchange
+      # - rabbitmq_event_exchange
+      - rabbitmq_federation
+      - rabbitmq_federation_management
+      # - rabbitmq_jms_topic_exchange
+      - rabbitmq_management
+      - rabbitmq_management_agent
+      # - rabbitmq_peer_discovery_aws
+      - rabbitmq_peer_discovery_common
+      # - rabbitmq_peer_discovery_consul
+      # - rabbitmq_peer_discovery_etcd
+      - rabbitmq_peer_discovery_k8s
+      - rabbitmq_prometheus
+      # - rabbitmq_random_exchange
+      # - rabbitmq_recent_history_exchange
+      - rabbitmq_sharding
+      - rabbitmq_shovel
+      - rabbitmq_shovel_management
+      # - rabbitmq_stomp
+      - rabbitmq_stream
+      - rabbitmq_stream_management
+      - rabbitmq_top
+      - rabbitmq_tracing
+      # - rabbitmq_trust_store
+      - rabbitmq_web_dispatch
+      # - rabbitmq_web_stomp
+      # - rabbitmq_web_stomp_examples
+      # - rabbitmq_mqtt
+      # - rabbitmq_web_mqtt
+      # - rabbitmq_web_mqtt_examples
+    # erlangInetConfig: |
+    #   {inet6, true}.
+  # service:
+  #   type: ClusterIP
+    # annotations:
+    #   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+  # persistence:
+  #   storageClassName: standard
+  #   storage: 10Gi
+  # replicas: 1
+  resources:
+    requests:
+      cpu: 500m # Default: "1"
+      memory: 1Gi # Default: 2Gi
+    limits:
+      cpu: 1 # Default: "2"
+      memory: 2Gi
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: kubernetes.io/hostname
+  #           operator: In
+  #           values:
+  #           - node-1
+  # tolerations:
+  #   - key: "dedicated"
+  #     operator: "Equal"
+  #     value: "rabbitmq"
+  #     effect: "NoSchedule"

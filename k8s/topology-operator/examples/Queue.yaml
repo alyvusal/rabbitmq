@@ -1,0 +1,12 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#queues-policies
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: test # name of this custom resource; does not have to the same as the actual queue name
+  # namespace: rabbitmq-dev
+spec:
+  name: test-queue
+  durable: true
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq

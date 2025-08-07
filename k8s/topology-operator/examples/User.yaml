@@ -1,0 +1,73 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#users-permissions
+# Users with auto-generated username and password
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  name: dynamic-user-example
+  # namespace: rabbitmq-dev
+spec:
+  tags:
+  - policymaker
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+---
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#provided-sec-users
+# Users with provided username and password
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-admin-user-credentials # IMPORTANT: this Secret name must match .spec.importCredentialsSecret.name field in User object
+  # annotations:
+  #   rabbitmq.com/topology-allowed-namespaces: "default,rabbitmq-dev"
+type: Opaque
+stringData:
+  username: my-admin-user
+  password: my-admin-user # base64 of my-admin-user
+  # passwordHash: ""
+  # If the passwordHash field is present, then password field is ignored and the resulting credentials Secret will contain only the hash.
+  # If the hash is an empty string, a passwordless user is created.
+
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  name: my-admin-user
+  # namespace: rabbitmq-dev
+spec:
+  tags:
+  - administrator
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+  importCredentialsSecret:
+    name: my-admin-user-credentials # name of the secret
+---
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#provided-sec-users
+# Users with password hash and password-less users
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-hash-user-credentials # IMPORTANT: this Secret name must match .spec.importCredentialsSecret.name field in User object
+  # annotations:
+  #   rabbitmq.com/topology-allowed-namespaces: "default,rabbitmq-dev"
+type: Opaque
+stringData:
+  username: my-hash-user
+  passwordHash: tLXSw48rCJO5gc8zu2UJRxR+RfbmNIJMWA6udRQlb6zVWwZg # SHA-512 hash of "foobarbaz"
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  name: my-hash-user
+  # namespace: rabbitmq-dev
+spec:
+  tags:
+  - policymaker
+  - monitoring # other available tags are 'management' and 'administrator'
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
+  importCredentialsSecret:
+    name: my-hash-user-credentials # must match the name of the Secret

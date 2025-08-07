@@ -1,0 +1,15 @@
+# https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#queues-policies
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: policy-example # name of this custom resource
+  # namespace: rabbitmq-dev
+spec:
+  name: lazy-queue
+  pattern: "^lazy-queue-" # matches any queue begins with "lazy-queue-"
+  applyTo: "queues"
+  definition:
+    queue-mode: lazy
+  rabbitmqClusterReference:
+    name: rabbitmq-cluster
+    namespace: rabbitmq
