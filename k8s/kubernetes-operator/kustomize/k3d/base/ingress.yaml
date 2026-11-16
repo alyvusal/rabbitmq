@@ -1,0 +1,68 @@
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: ServersTransport
+# metadata:
+#   name: rabbitmq-transport
+#   namespace: rabbitmq-system
+# spec:
+#   insecureSkipVerify: true
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: rabbitmq-cluster-https
+#   annotations:
+#     traefik.ingress.kubernetes.io/service.serversscheme: https
+#     traefik.ingress.kubernetes.io/service.serverstransport: rabbitmq-system-rabbitmq-transport@kubernetescrd
+# spec:
+#   selector:
+#     app.kubernetes.io/name: rabbitmq-cluster
+#   ports:
+#     - name: management-tls
+#       port: 15671
+#       targetPort: 15671
+#     - appProtocol: rabbitmq.com/stream-tls
+#       name: streams
+#       port: 5551
+#       protocol: TCP
+#       targetPort: 5551
+#     - appProtocol: prometheus.io/metric-tls
+#       name: prometheus-tls
+#       port: 15691
+#       protocol: TCP
+#       targetPort: 15691
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rabbitmq-cluster
+  # annotations:
+  #   # Remove router.tls: "true" so plain HTTP works on the 'web' entrypoint
+  #   # traefik.ingress.kubernetes.io/router.tls: "true"
+  #   traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  # tls:
+  #   - hosts:
+  #       - rabbitmq-tls-192.168.0.100.nip.io
+  #     secretName: rabbitmq-cluster-cert
+  rules:
+  # - host: rabbitmq-tls-192.168.0.100.nip.io
+  #   http:
+  #     paths:
+  #     - backend:
+  #         service:
+  #           name: rabbitmq-cluster-https
+  #           port:
+  #             number: 15671
+  #       path: /
+  #       pathType: Prefix
+  - host: rabbitmq-192.168.0.100.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: rabbitmq-cluster
+            port:
+              number: 15672
+        path: /
+        pathType: Prefix

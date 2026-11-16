@@ -1,0 +1,14 @@
+# Strict mTLS for RabbitMQ server pods. A namespace-wide policy would also
+# cover the cluster operator webhook, which the API server calls without an
+# Istio sidecar. Ports 4369 and 25672 are excluded from the sidecar in
+# cluster.yaml, so Erlang clustering is outside this policy.
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: rabbitmq-cluster
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq-cluster
+  mtls:
+    mode: STRICT

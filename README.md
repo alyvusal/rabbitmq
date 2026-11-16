@@ -4,8 +4,6 @@
 
 Currently RabbitMQ 3.x used with AMQP 0.9.1 by default, for 4.x AMQP 1.0 will be deault version.
 
-[Native AMQP 1.0 in RabbitMQ 4.0](https://www.rabbitmq.com/blog/2024/08/05/native-amqp)
-
 ## [Architecture and concept](./docs/concept.md)
 
 ## [Installation](./docs/install.md)
@@ -24,7 +22,7 @@ Currently RabbitMQ 3.x used with AMQP 0.9.1 by default, for 4.x AMQP 1.0 will be
 
 ## Topology operator
 
-To get helm on spect elements
+To get help on spec elements
 
 ```bash
 kubectl get crd policies.rabbitmq.com -o yaml  | yq .spec.versions[0].schema.openAPIV3Schema.properties.spec.properties

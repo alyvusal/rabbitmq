@@ -1,0 +1,6 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq-cluster
+  annotations:
+    rabbitmq.com/topology-allowed-namespaces: "default,rabbitmq-system,rabbitmq-slave"  # https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#namespace-scope

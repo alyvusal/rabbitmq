@@ -1,0 +1,26 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rabbitmq-cluster
+spec:
+  dnsNames:
+    - localhost
+    - rabbitmq-192.168.0.100.nip.io
+    - rabbitmq-tls-192.168.0.100.nip.io
+    - rabbitmq-cluster.rabbitmq-system.svc
+    - rabbitmq-cluster.rabbitmq-system.svc.cluster.local
+    - rabbitmq-cluster-server-0.rabbitmq-cluster-nodes.svc
+    - rabbitmq-cluster-server-0.rabbitmq-cluster-nodes.svc.cluster.local
+    - rabbitmq-cluster-server-1.rabbitmq-cluster-nodes.svc
+    - rabbitmq-cluster-server-1.rabbitmq-cluster-nodes.svc.cluster.local
+    - rabbitmq-cluster-server-2.rabbitmq-cluster-nodes.svc
+    - rabbitmq-cluster-server-2.rabbitmq-cluster-nodes.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rabbitmq-ca-issuer
+  secretName: rabbitmq-cluster-cert
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth

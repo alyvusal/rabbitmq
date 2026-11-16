@@ -1,14 +1,19 @@
+# Examples: https://github.com/rabbitmq/cluster-operator/tree/main/docs/examples
+---
 apiVersion: rabbitmq.com/v1beta1
 kind: RabbitmqCluster
 metadata:
   name: rabbitmq-cluster
   # annotations:
-  #   rabbitmq.com/topology-allowed-namespaces: "rabbitmq"
+  #   rabbitmq.com/topology-allowed-namespaces: "rabbitmq-system"
 spec:
   # https://github.com/rabbitmq/cluster-operator/tree/main/docs/examples/external-admin-secret-credentials
   secretBackend:
     externalSecret:
-      name: rabbitmq-cluster-default-user-external
+      name: rabbitmq-cluster-additional-config
+
+  # The default admin username/password are supplied by the external secret above.
+  # Do not set default_user/default_pass in rabbitmq.additionalConfig when using this secret.
   # https://www.rabbitmq.com/kubernetes/operator/using-operator#override
   # override:
   #   service:
@@ -17,6 +22,7 @@ spec:
   #         - name: additional-port # adds an additional port on the service
   #           protocol: TCP
   #           port: 12345
+
   #   statefulSet:
   #     spec:
   #       template:
@@ -27,11 +33,20 @@ spec:
   #                 - containerPort: 12345 # opens an additional port on the rabbitmq server container
   #                   name: additional-port
   #                   protocol: TCP
-  # https://www.rabbitmq.com/kubernetes/operator/using-operator#tls-conf
-  # tls:
-  #   secretName: rabbitmq-server-certs
-  #   caSecretName: rabbitmq-ca-cert
-  #   disableNonTLSListeners: true
+
+  # EPMD (4369) and Erlang distribution (25672) dial pod IPs. Istio cannot
+  # decode that protocol, and strict mTLS rejects it. AMQP, management,
+  # stream, and Prometheus stay on the sidecar. This is for old Istio version (0.8.0, 1.0, 1.6.8)
+  # override:
+  #   statefulSet:
+  #     spec:
+  #       template:
+  #         metadata:
+  #           annotations:
+  #             traffic.sidecar.istio.io/excludeInboundPorts: "4369,25672"
+  #             traffic.sidecar.istio.io/excludeOutboundPorts: "4369,25672"
+
+
   rabbitmq:
     # /etc/rabbitmq/rabbitmq-env.conf.
     # envConfig: |
@@ -49,20 +64,31 @@ spec:
       default_permissions.configure = .*
       default_permissions.read = .*
       default_permissions.write = .*
-      default_user = admin
-      default_pass = admin
       default_user_tags.administrator = true
-    #   collect_statistics_interval = 10000
-    #   log.console.level = info
-    #   log.file.level = info
+
+      # The RabbitMQ default user/password are managed by the external secret
+      # rabbitmq-cluster-default-user and not by these RabbitMQ config settings.
+      # default_user = admin
+      # default_pass = admin
+
+      # Enable TLS to be provided by the client. Without below:
+      # RabbitMQ allows a TLS client on port 5671 to connect with no certificate.
+      # caSecretName only checks a certificate when the client actually sends one.
+      # ssl_options.fail_if_no_peer_cert = true
+
+      # collect_statistics_interval = 10000
+      # log.console.level = debug
+      # log.file.level = debug
+
     # /etc/rabbitmq/advanced.config
+    # The contents of this field are copied into a ConfigMap and mounted in the RabbitMQ container in the path /etc/rabbitmq/erl_inetrc.
     # advancedConfig: |
     #   [
     #       {ra, [
     #           {wal_data_dir, '/var/lib/rabbitmq/quorum-wal'}
     #       ]}
     #   ].
-    # The contents of this field are copied into a ConfigMap and mounted in the RabbitMQ container in the path /etc/rabbitmq/erl_inetrc.
+
     # https://www.rabbitmq.com/kubernetes/operator/using-operator#additional-plugins
     additionalPlugins:
       # - rabbitmq_amqp1_0
@@ -101,16 +127,16 @@ spec:
       # - rabbitmq_mqtt
       # - rabbitmq_web_mqtt
       # - rabbitmq_web_mqtt_examples
+
     # erlangInetConfig: |
     #   {inet6, true}.
-  # service:
-  #   type: ClusterIP
-    # annotations:
-    #   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+
   # persistence:
   #   storageClassName: standard
   #   storage: 10Gi
-  # replicas: 1
+
+  replicas: 3  # HA deployment with 3 nodes. Default: 1
+
   resources:
     requests:
       cpu: 500m # Default: "1"
@@ -118,6 +144,7 @@ spec:
     limits:
       cpu: 1 # Default: "2"
       memory: 2Gi
+
   # affinity:
   #   nodeAffinity:
   #     requiredDuringSchedulingIgnoredDuringExecution:
@@ -127,8 +154,30 @@ spec:
   #           operator: In
   #           values:
   #           - node-1
+
   # tolerations:
   #   - key: "dedicated"
   #     operator: "Equal"
   #     value: "rabbitmq"
   #     effect: "NoSchedule"
+
+  # https://www.rabbitmq.com/kubernetes/operator/using-operator#tls-conf
+  # tshoot: https://www.rabbitmq.com/docs/ssl
+  # tls:
+  #   # disableNonTLSListeners: true
+  #   secretName: rabbitmq-cluster-cert  # enable traffic encryption between client and server
+  #   # This example uses a self-signed certificate, so the CA certificate is the same as the server certificate
+  #   caSecretName: rabbitmq-cluster-cert # enable mTLS, used to verify clients' certificates
+  #   interNode:
+  #     enabled: true
+  #     issuerRef:
+  #       name: rabbitmq-ca-issuer
+  #       kind: Issuer
+
+  # service:
+  #   type: ClusterIP
+  #   annotations:
+  #     service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+  #     traefik.ingress.kubernetes.io/service.serversscheme: https
+  #     Format MUST be: <namespace>-<ServersTransport-name>@kubernetescrd
+  #     traefik.ingress.kubernetes.io/service.serverstransport: rabbitmq-system-rabbitmq-transport@kubernetescrd

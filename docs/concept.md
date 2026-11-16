@@ -17,13 +17,16 @@ Messages sent with Advanced Message Queuing Protocol ([AMQP](https://www.rabbitm
 
 [AMQP 0-9-1 Model Explained](https://www.rabbitmq.com/tutorials/amqp-concepts)
 
-|Protocol|Bound to Port|
-|-|-|
-|amqp|5672|
-|clustering|25672|
-|http/management|15672|
-|http/prometheus|15692|
-|stream|5552|
+[Native AMQP 1.0 in RabbitMQ 4.0](https://www.rabbitmq.com/blog/2024/08/05/native-amqp)
+
+| Protocol / Service | Non-TLS Port | TLS Port | Notes |
+| - | - | - | - |
+| AMQP 0-9-1 & 1.0 | 5672 | 5671 | Core messaging protocol for client applications. |
+| Management UI & HTTP API | 15672 | 15671 | Requires the `rabbitmq_management` plugin. |
+| RabbitMQ Streams | 5552 | 5551 | Used by stream protocol clients. |
+| MQTT | 1883 | 8883 | Requires the MQTT plugin. |
+| STOMP | 61613 | 61614 | Requires the STOMP plugin. |
+| Prometheus Metrics | 15692 | 15691 | Requires the Prometheus monitoring plugin. |
 
 ## Queue
 

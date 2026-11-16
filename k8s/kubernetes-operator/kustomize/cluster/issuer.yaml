@@ -1,0 +1,34 @@
+---
+# Will generate own secret to sign CA certs
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rabbitmq-selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+# uses rabbitmq-selfsigned-issuer to issue a CA certificate for rabbitmq-ca-issuer
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rabbitmq-ca
+spec:
+  isCA: true
+  commonName: rabbitmq-ca
+  secretName: rabbitmq-ca-secret
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: rabbitmq-selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+# Uses rabbitmq-ca to issue a certificate for RabbitMQ cluster
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rabbitmq-ca-issuer
+spec:
+  ca:
+    secretName: rabbitmq-ca-secret
